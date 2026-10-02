@@ -1,0 +1,1 @@
+# Browser-local version: Python standard library only. No pip packages required.

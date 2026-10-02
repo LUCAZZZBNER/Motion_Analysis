@@ -1,0 +1,10 @@
+.venv/
+.runs/
+models/*.task
+__pycache__/
+.pytest_cache/
+.env
+pip-cache/
+assets/models/*.task
+assets/vendor/tasks-vision/
+.test/

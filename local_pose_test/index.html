@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>动作对比 · 本地小测试</title><link rel="stylesheet" href="/styles.css"><script type="module" src="/app.mjs"></script></head>
+<body>
+<main>
+  <header><div><p class="eyebrow">MediaPipe Lite · 本地 CPU 识别</p><h1>看清自己的动作</h1><p class="intro">选择自己的视频和参考视频，比较骨架、角度与运动轨迹。</p></div><span class="badge">视频保留在本机</span></header>
+  <div id="status" class="status" role="status" aria-live="polite">正在检查本地资源……</div>
+  <section class="panel"><h2>1 · 准备视频</h2><p class="muted">使用同一种动作、相近拍摄角度、单人全身入镜的视频。首次各分析 5–10 秒。</p>
+    <div class="video-grid">
+      <article class="video-card"><h3><span class="dot mine"></span>我的视频</h3><label class="file-label">选择视频<input id="user-file" type="file" accept="video/mp4,video/webm,video/quicktime"></label><p id="user-info" class="muted">尚未选择</p><div class="video-wrap"><video id="user-video" controls preload="metadata" muted playsinline></video><canvas id="user-overlay"></canvas></div><div class="clip-inputs"><label>开始（秒）<input id="user-start" type="number" min="0" step="0.05" value="0"></label><label>结束（秒）<input id="user-end" type="number" min="0" step="0.05" value="10"></label></div><button id="user-export" class="secondary" disabled>下载我的标注片段</button></article>
+      <article class="video-card"><h3><span class="dot target"></span>参考视频</h3><label class="file-label">选择视频<input id="target-file" type="file" accept="video/mp4,video/webm,video/quicktime"></label><p id="target-info" class="muted">尚未选择</p><div class="video-wrap"><video id="target-video" controls preload="metadata" muted playsinline></video><canvas id="target-overlay"></canvas></div><div class="clip-inputs"><label>开始（秒）<input id="target-start" type="number" min="0" step="0.05" value="0"></label><label>结束（秒）<input id="target-end" type="number" min="0" step="0.05" value="10"></label></div><button id="target-export" class="secondary" disabled>下载参考标注片段</button></article>
+    </div>
+    <div class="settings"><label>每秒识别<select id="fps"><option value="2">2 帧 · 更省资源</option><option value="4" selected>4 帧 · 默认</option><option value="8">8 帧 · 更细</option></select></label><label>关键点过滤<select id="threshold"><option value="0.3">0.3 · 较宽松</option><option value="0.5" selected>0.5 · 默认</option><option value="0.7">0.7 · 较严格</option></select></label></div>
+    <div class="settings"><label>标注细节<select id="detail"><option value="all" selected>详细 · 全部 33 点</option><option value="body">简洁 · 身体 12 点</option></select></label><label class="checkbox"><input id="point-labels" type="checkbox">显示关键点编号</label></div>
+    <p class="muted">详细模式包含脸部、粗略手部和脚部位置。点的实际显示取决于识别结果与过滤值；手部点不能表示每根手指的弯曲。</p>
+    <p class="muted">轻量限制：每个文件 ≤100 MiB，分辨率 ≤720p 像素量，每段 ≤20 秒，每段最多 160 帧。处理画面最长边 480 像素。</p>
+    <div class="actions"><button id="probe" class="secondary" disabled>先测试一帧</button><button id="analyze" disabled>分析两段视频</button><button id="cancel" class="secondary" hidden>停止</button><button id="clear" class="plain">清空结果与视频</button></div>
+    <progress id="bar" max="1" value="0" hidden></progress><p id="summary" class="muted">模型按需加载；上传选择只在本机读取，不复制原视频。</p>
+  </section>
+  <section id="results" class="panel" hidden><h2>2 · 姿态与参考对比</h2>
+    <div class="settings"><label class="checkbox"><input id="mirror" type="checkbox">镜像参考左右侧</label><label>同一动作进度 <output id="position-label">50%</output><input id="position" type="range" min="0" max="100" value="50"></label></div>
+    <div class="settings"><label>三维对比方式<select id="view-mode"><option value="overlay">两套骨架重合</option><option value="separate">两套骨架并排</option></select></label><label class="checkbox"><input id="show-trail" type="checkbox">显示所选关键点的 3D 轨迹</label></div>
+    <div class="view-buttons"><button id="view-front" class="secondary">正面</button><button id="view-side" class="secondary">侧面</button><button id="view-top" class="secondary">俯视</button><button id="view-reset" class="plain">重置视角</button></div>
+    <canvas id="skeleton" width="860" height="465" tabindex="0" aria-label="可旋转的三维双骨架对比" aria-describedby="view-help"></canvas>
+    <p id="view-help" class="muted">鼠标拖动旋转，滚轮缩放；Shift＋拖动或右键拖动平移，双击重置。触屏可单指旋转；选中视图后也可用方向键旋转。</p>
+    <p class="muted">绿色：我；橙色：参考。使用模型直接输出的 XYZ 三维坐标，髋中心对齐并按固定躯干长度缩放。单目视频估计的是 3D 骨架，不是人体表面扫描；遮挡与深度可能有误差。两段仅按动作进度对齐，不自动校正拍摄方向。</p>
+    <h3>三维关节角度与差异</h3><div id="angle-options" class="checks"></div><div class="table-scroll"><table><thead><tr><th>三维角度</th><th>平均绝对差（°）</th><th>有效对比覆盖</th></tr></thead><tbody id="angle-table"></tbody></table></div><div id="angle-charts" class="chart-grid"></div><div id="difference-chart"></div>
+    <p class="muted">角度由三个 XYZ 点计算，180°接近伸直；髋角用肩—髋—膝近似。缺失段留空，差异不作为动作质量评分。</p>
+    <h3>三维运动轨迹与曲线</h3><div class="settings"><label>追踪关键点<select id="joint"></select></label></div>
+    <div id="trajectory-chart"></div><div class="chart-grid"><div id="x-chart"></div><div id="y-chart"></div><div id="z-chart"></div></div><p class="muted">轨迹单位为各视频的中位躯干长度，Y 向上、Z 朝向默认正面视点。模型世界坐标以髋为原点，不包含人在场地中的真实位移。</p>
+    <div class="actions"><button id="csv" class="secondary">下载角度与轨迹 CSV</button><button id="json" class="secondary">下载原始关键点 JSON</button></div>
+  </section>
+  <footer><p id="resource-info">资源占用正在检查……</p><p id="memory-info">内存上限 1 GB：浏览器读数与任务管理器需结合检查。</p><p>关闭启动窗口即可停止本地服务。所有模型、运行文件和图表均来自本机。</p></footer>
+</main>
+</body></html>

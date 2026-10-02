@@ -21,6 +21,18 @@
 
 ## 以后讨论
 
-先选动作和结果，再决定2D或3D、模型、参考素材和比较方法。
+正式产品的动作、参考素材、2D / 3D 方法和比较规则随试验逐步决定。
 
-[MediaPipe官方资料](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker)可作为姿态工具候选参考，不代表已经选定该模型。
+[MediaPipe官方资料](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker)用于了解已选小测试模型；正式产品是否沿用仍待试验。
+
+2026-10-02：[免费动作识别模型清单](../免费动作识别模型清单.md)集中记录姿态、动作分类、三维重建和计数等候选及许可限制。这是参考资料，不代表技术方案已经确定。
+
+## 本次小测试的模型选择
+
+2026-10-02：小测试已接入 **MediaPipe Pose Landmarker Lite**，浏览器本地 CPU 推理，无需云端密钥。已有 33 点 XYZ 输出用于可旋转的 3D 双骨架、三维角度和轨迹对比；原片标注仍使用图像坐标。[官方浏览器接口](https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker/web_js)
+
+已按用户授权下载到 local_pose_test/assets，并核对完整性：Lite 模型 5,777,746 字节；浏览器运行库 @mediapipe/tasks-vision 1.0.1 完整解包 36,831,894 字节，合计约 43 MB，不含视频、输出和浏览器自身。运行库许可 Apache-2.0。[资源与校验记录](../local_pose_test/assets/manifest.json)
+
+两段按采样时间进度对齐，缺失段保留空缺；可以镜像参考左右侧。三维轨迹用固定中位躯干长度缩放，以每帧髋中心为原点。可以鼠标旋转查看重合或并排骨架；单目深度为模型估计，不是精确扫描，也不代表场地内的真实位移。没有自动计次、切分动作或匹配阶段。
+
+已限制分辨率、区间与采样数量，两段顺序处理，不缓存全部帧。硬盘 ≤5 GB、内存 ≤1 GB 是小测试要求；真人视频效果和完整进程峰值需继续验证，不能仅凭模型文件大小保证。
